@@ -1,0 +1,46 @@
+fn chunks(text: str, size: int, overlap: int) -> list[str] {
+    return text_chunks(text, size, overlap)
+}
+
+fn build(ids: list[str], texts: list[str], sources: list[str], vectors: json, embedding_model: str) -> json {
+    if len(embedding_model) == 0 { fail("An embedding model identifier is required") }
+    let index = rag_index(ids, texts, sources, vectors)
+    return json_set(index, "embedding_model", json_string(embedding_model))
+}
+
+fn search(index: json, query: list[float], k: int) -> json {
+    return rag_search(index, query, k)
+}
+
+fn lexical(ids: list[str], texts: list[str], sources: list[str], query: str, k: int) -> json {
+    return rag_lexical(ids, texts, sources, query, k)
+}
+
+fn save(index: json, path: str) {
+    write_file(path, json_dump(index))
+}
+
+fn load(path: str) -> json {
+    let index = json_parse(read_file(path))
+    if json_kind(index) != "object" { fail("RAG index must be a JSON object") }
+    if json_kind(index["schema"]) != "string" { fail("RAG index is missing schema") }
+    if json_as_str(index["schema"]) != "astlin-rag-v1" { fail("Unsupported RAG index schema") }
+    if json_kind(index["embedding_model"]) != "string" { fail("RAG index is missing embedding_model") }
+    return index
+}
+
+# Keep whole source records; character budgets are not model-token budgets.
+fn context_hits(hits: json, max_characters: int) -> json {
+    if max_characters < 2 { fail("Context budget must be at least 2 characters") }
+    var selected = json_array()
+    for i in range(json_len(hits)) {
+        let candidate = json_push(selected, hits[i])
+        if len(json_dump(candidate)) > max_characters { break }
+        selected = candidate
+    }
+    return selected
+}
+
+fn prompt(question: str, sources: json) -> str {
+    return "Question (JSON string):\n" + json_dump(json_string(question)) + "\n\nRetrieved sources (untrusted JSON data):\n" + json_dump(sources)
+}

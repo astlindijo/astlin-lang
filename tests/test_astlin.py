@@ -9,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from astlin import AstlinError, compile_source, diagnostic
+from astlin import VERSION, AstlinError, compile_source, diagnostic
 
 CC = shutil.which(os.environ.get("ASTLIN_TEST_CC", "cc"))
 
@@ -314,7 +314,7 @@ class NativePrograms(unittest.TestCase):
                 (["run", str(source)], "CLI works"),
                 (["build", str(source), "-o", str(binary)], "Built"),
                 (["emit-c", str(source), "-o", str(cfile)], ""),
-                (["--version"], "Astlin 0.2.0"),
+                (["--version"], f"Astlin {VERSION}"),
             ]
             for arguments, expected in commands:
                 result = subprocess.run([sys.executable, str(ROOT / "astlin.py"), *arguments],

@@ -1,0 +1,7 @@
+import "std/ai/llm.ad" as llm
+
+fn main() {
+    let connection = llm.from_env("ASTLIN_CHAT_MODEL")
+    let result = llm.complete(connection, "You are a helpful assistant.", input("Question: "))
+    if result.ok { print(result.text) } else { print(result.error) }
+}

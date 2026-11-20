@@ -1,6 +1,6 @@
 # Astlin
 
-**Astlin is a statically typed programming language with `.ad` source files and native executables.**
+**Astlin is a statically typed `.ad` language with native executables and an AI application toolkit.**
 
 [Source](https://github.com/astlindijo/astlin-lang) ·
 [Releases](https://github.com/astlindijo/astlin-lang/releases) ·
@@ -8,10 +8,26 @@
 
 [![Astlin CI](https://github.com/astlindijo/astlin-lang/actions/workflows/ci.yml/badge.svg)](https://github.com/astlindijo/astlin-lang/actions/workflows/ci.yml)
 
-Version **0.2.0** includes a working compiler, tracing garbage collector, multi-file
-imports, immutable structs, a small standard library, project tools, tests, offline
-installation, and VS Code syntax support. The compiler uses Python's standard library;
-the programs it builds run independently of Python.
+Development version **0.3.0** adds typed JSON, optional native HTTP, chat/embedding
+clients, offline BM25, vector retrieval, source-bearing RAG pipelines, and CPU numeric
+kernels. It builds on the compiler, collector, modules, structs, project tools, and
+VS Code syntax support introduced in 0.2. The compiler uses Python's standard library;
+compiled programs run independently of Python. HTTP programs additionally link libcurl.
+
+See [AI.md](AI.md) for the complete AI guide, API contracts, and current limits.
+The published 0.2.0 release remains available; these 0.3 changes are a development update.
+
+## Try AI features offline
+
+```sh
+python3 -m astlin run examples/ai_demo.ad
+python3 -m astlin init my-rag --template rag
+```
+
+The RAG template performs BM25 lexical retrieval without a model, key, or network.
+For configured model servers, use `init --template llm`, `doctor --ai`, and the live
+examples in `examples/ai/live/`. Those require libcurl and actually call the endpoint
+you configure; automated tests use a local mock server and dummy keys.
 
 ```text
 import "std/math.ad" as math
@@ -119,6 +135,10 @@ define their own `main` functions.
 | Area | Implemented |
 | --- | --- |
 | Types | `int`, `float`, `bool`, `str`, homogeneous scalar lists, immutable structs |
+| AI data | First-class immutable `json`, Unicode chunks, versioned retrieval indexes |
+| AI clients | Optional libcurl HTTP, non-streaming chat, indexed/batched embeddings, structured results |
+| Retrieval | Exact cosine top-k, offline BM25, model checks, source context and persistence |
+| Numeric kernels | Float64 dot/norm/cosine, stable softmax/top-k, row-major matrix multiplication |
 | Bindings | Inferred locals, `let` for immutable bindings, `var` for reassignment |
 | Functions | Typed parameters/returns, recursion, forward calls, lexical scopes |
 | Control flow | `if`/`else`, `while`, list/range loops, `break`, `continue` |
@@ -135,7 +155,7 @@ outperform Python, C, C++, Java, or C# across workloads.
 See [LANGUAGE.md](LANGUAGE.md) for exact semantics and the built-in API, and
 [CHANGELOG.md](CHANGELOG.md) for the release changes.
 
-Release notes and publication steps are in [releases/v0.2.0.md](releases/v0.2.0.md)
+Development release notes and publication steps are in [releases/v0.3.0.md](releases/v0.3.0.md)
 and [RELEASING.md](RELEASING.md). `make release` builds the distributions, verifies
 their contents, and writes `dist/SHA256SUMS`; public publication is a separate step.
 
@@ -175,8 +195,8 @@ allocations are freed at exit. Generated temporary values may remain rooted unti
 their enclosing block ends. `gc_collect()` requests a collection; `heap_bytes()`
 reports managed payload bytes, excluding runtime metadata and the native stack.
 
-The collector is single-threaded and uses linear allocation lookup. Large live heaps
-can cause pauses. There is no hard memory limit or stack-overflow recovery. Runtime
+The collector is single-threaded and uses a hash index for expected constant-time
+allocation lookup. Large live heaps can still cause pauses. There is no hard memory limit or stack-overflow recovery. Runtime
 checks and sanitizer tests provide evidence for the implemented behavior; this is
 not a formal safety proof or a security audit.
 
@@ -211,11 +231,17 @@ are future work. The extension has not been published or installed automatically
 
 - `astlin/compiler.py`: source loading, syntax, checking, code generation, CLI.
 - `astlin/runtime.h`: collector, checked operations, strings, lists, I/O, math.
+- `astlin/runtime_json.h`, `runtime_ai.h`, `runtime_http.h`: data, numeric/retrieval kernels, optional transport.
+- `astlin/std/ai/`: HTTP, LLM, RAG, end-to-end pipeline, and matrix modules.
 - `astlin/std/`: reusable library modules written in Astlin.
 - `tools/build_backend.py`: dependency-free distribution builder.
 - `tests/`: static checks, native integration, CLI, and runtime tests.
 
-Current limits include one-dimensional scalar lists, immutable positional structs,
+AI limits include no GPU/autograd, native model training, async, streamed chat, ANN
+database, or provider tool-call execution. The kernels are ordinary CPU loops;
+no superiority over established AI frameworks has been demonstrated.
+
+Other limits include one-dimensional scalar lists, immutable positional structs,
 no recursive struct types, no module re-exports, no closures, exceptions, interfaces,
 user generics, async, threads, dictionaries, binary-file API, or foreign-function API.
 There is no language package registry, formatter, language server, or debugger

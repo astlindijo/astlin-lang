@@ -1,0 +1,24 @@
+import "std/ai/llm.ad" as llm
+import "std/ai/rag.ad" as rag
+import "std/ai/pipeline.ad" as pipeline
+
+fn main() {
+    let arguments = args()
+    if len(arguments) != 2 { print("Usage: rag <text-file> <question>"); return }
+    let source = arguments[0]
+    let question = arguments[1]
+    let embedding = llm.from_env("ASTLIN_EMBED_MODEL")
+    let chat = llm.from_env("ASTLIN_CHAT_MODEL")
+    let texts = rag.chunks(read_file(source), 800, 100)
+    var ids: list[str] = []
+    var sources: list[str] = []
+    for i in range(len(texts)) {
+        ids = append(ids, "chunk-" + str(i))
+        sources = append(sources, source + "#chunk-" + str(i))
+    }
+    let vectors = llm.embed_batches(embedding, texts, 32)
+    if not vectors.ok { print(vectors.error); return }
+    let index = rag.build(ids, texts, sources, vectors.vectors, embedding.model)
+    let result = pipeline.answer(index, embedding, chat, question, 4, 12000)
+    if result.ok { print(result.text); print("Sources:", result.sources) } else { print(result.error) }
+}

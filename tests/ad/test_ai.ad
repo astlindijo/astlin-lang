@@ -1,0 +1,19 @@
+import "std/ai/rag.ad" as rag
+import "std/ai/tensor.ad" as tensor
+
+fn main() {
+    let value: json = json_parse("{\"answer\":42,\"tags\":[\"AI\",\"🌍\"]}")
+    assert(json_as_int(value["answer"]) == 42)
+    assert(json_as_str(value["tags"][1]) == "🌍")
+    let changed = json_set(value, "answer", json_int(99))
+    gc_collect()
+    assert(json_as_int(value["answer"]) == 42)
+    assert(json_as_int(changed["answer"]) == 99)
+    assert(vector_dot([1.0, 2.0], [3.0, 4.0]) == 11.0)
+    assert(abs(vector_cosine([1e308, 1e308], [1e308, 1e308]) - 1.0) < 0.000001)
+    assert(vector_topk([0.5, 0.9, 0.9], 2)[0] == 1)
+    let index = rag.build(["a", "b"], ["Alpha", "Beta"], ["a.md", "b.md"], json_parse("[[1,0],[0,1]]"), "manual-test-v1")
+    assert(json_as_str(rag.search(index, [0.0, 1.0], 1)[0]["id"]) == "b")
+    let product = tensor.matmul(tensor.matrix(1, 2, [2.0, 3.0]), tensor.matrix(2, 1, [4.0, 5.0]))
+    assert(product.values[0] == 23.0)
+}

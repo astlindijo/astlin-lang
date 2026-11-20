@@ -32,11 +32,11 @@ The release command refuses to create a missing remote tag or overwrite an exist
 ```sh
 gh auth status
 git status --short
-git tag -a v0.2.0 -m "Astlin v0.2.0"
+git tag -a v0.3.0 -m "Astlin v0.3.0"
 git push origin main
-git push origin v0.2.0
-gh release create v0.2.0 dist/astlin_lang-0.2.0-py3-none-any.whl dist/astlin_lang-0.2.0.tar.gz dist/SHA256SUMS --verify-tag --title "Astlin v0.2.0" --notes-file releases/v0.2.0.md
-gh release view v0.2.0 --json url,tagName,isDraft,assets
+git push origin v0.3.0
+gh release create v0.3.0 dist/astlin_lang-0.3.0-py3-none-any.whl dist/astlin_lang-0.3.0.tar.gz dist/SHA256SUMS --verify-tag --prerelease --title "Astlin v0.3.0" --notes-file releases/v0.3.0.md
+gh release view v0.3.0 --json url,tagName,isDraft,assets
 ```
 
 This version is a development release. Its notes and README must continue to describe

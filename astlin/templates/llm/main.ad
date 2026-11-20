@@ -1,0 +1,11 @@
+import "std/ai/llm.ad" as llm
+
+fn main() {
+    if env("ASTLIN_CHAT_MODEL") == "" {
+        print("Set ASTLIN_CHAT_MODEL and optionally ASTLIN_AI_BASE_URL / ASTLIN_AI_API_KEY.")
+        return
+    }
+    let connection = llm.from_env("ASTLIN_CHAT_MODEL")
+    let result = llm.complete(connection, "You are a helpful assistant.", "Explain RAG in two sentences.")
+    if result.ok { print(result.text) } else { print(result.error) }
+}

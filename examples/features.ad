@@ -19,7 +19,7 @@ fn main() {
     let changed = updated(values, 0, 99)
     print("original:", values, "changed:", changed)
     print("slice:", slice(changed, 1, 3))
-    print(Report("Astlin 0.2", origin, values))
+    print(Report("Astlin 0.3", origin, values))
 
     let words = split(trim("  hello,Astlin,🌍  "), ",")
     print(join(words, " "))

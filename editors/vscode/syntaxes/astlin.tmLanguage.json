@@ -7,7 +7,7 @@
     ] },
     { "name": "keyword.control.astlin", "match": "\\b(fn|let|var|if|else|while|for|in|return|break|continue|import|as|struct|and|or|not)\\b" },
     { "name": "constant.language.astlin", "match": "\\b(true|false)\\b" },
-    { "name": "storage.type.astlin", "match": "\\b(int|float|bool|str|void|list)\\b" },
+    { "name": "storage.type.astlin", "match": "\\b(int|float|bool|str|json|void|list)\\b" },
     { "name": "constant.numeric.astlin", "match": "\\b[0-9]+(?:\\.[0-9]*)?(?:[eE][+-]?[0-9]+)?\\b" },
     { "name": "entity.name.function.astlin", "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()" }
   ]

@@ -1,0 +1,21 @@
+struct Matrix {
+    rows: int
+    cols: int
+    values: list[float]
+}
+
+fn matrix(rows: int, cols: int, values: list[float]) -> Matrix {
+    assert(rows >= 0 and cols >= 0)
+    assert(len(values) == rows * cols)
+    return Matrix(rows, cols, values)
+}
+
+fn matmul(left: Matrix, right: Matrix) -> Matrix {
+    assert(left.cols == right.rows)
+    return Matrix(left.rows, right.cols, tensor_matmul(left.values, right.values, left.rows, left.cols, right.cols))
+}
+
+fn at(value: Matrix, row: int, col: int) -> float {
+    assert(row >= 0 and row < value.rows and col >= 0 and col < value.cols)
+    return value.values[row * value.cols + col]
+}

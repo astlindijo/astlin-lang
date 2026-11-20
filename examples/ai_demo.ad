@@ -1,0 +1,20 @@
+import "std/ai/rag.ad" as rag
+import "std/ai/tensor.ad" as tensor
+
+fn main() {
+    let documents = ["Astlin source files use .ad.", "RAG retrieves sources to ground a generated answer.", "Local model servers can expose an OpenAI-compatible API."]
+    # These are explicit demo vectors, not learned/semantic embeddings.
+    let vectors = json_parse("[[1,0,0],[0,1,0],[0,0,1]]")
+    let index = rag.build(["language", "rag", "models"], documents, ["language.md", "rag.md", "models.md"], vectors, "manual-demo-v1")
+    let hits = rag.search(index, [1.0, 0.0, 0.0], 2)
+    print("Retrieved source:", json_as_str(hits[0]["id"]))
+    print("Similarity:", json_as_float(hits[0]["score"]))
+    let lexical = rag.lexical(["language", "rag", "models"], documents, ["language.md", "rag.md", "models.md"], "Astlin source extension", 2)
+    print("Offline BM25 source:", json_as_str(lexical[0]["id"]))
+    print("Unicode chunks:", rag.chunks("Astlin 🌍 supports AI", 10, 2))
+    let left = tensor.matrix(2, 2, [1.0, 2.0, 3.0, 4.0])
+    let right = tensor.matrix(2, 1, [10.0, 20.0])
+    print("Matrix product:", tensor.matmul(left, right).values)
+    print("Softmax:", vector_softmax([1000.0, 1001.0, 1002.0]))
+    assert(json_as_str(hits[0]["id"]) == "language")
+}

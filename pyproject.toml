@@ -6,7 +6,7 @@ backend-path = ["."]
 [project]
 name = "astlin-lang"
 dynamic = ["version"]
-description = "Astlin .ad language: static types, garbage collection, native executables"
+description = "Astlin .ad language: native AI toolkit, static types, and garbage collection"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []

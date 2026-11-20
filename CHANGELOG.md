@@ -1,5 +1,24 @@
 # Astlin release history
 
+## 0.3.0 — AI toolkit (development)
+
+- Added a first-class immutable `json` type, object/array access, strict parsing,
+  recoverable parsing, serialization, scalar conversions, and collector support.
+- Replaced linear managed-pointer lookup with a resizing hash index so tracing large
+  JSON/vector object graphs avoids scanning every allocation for each reference.
+- Added optional libcurl-backed native HTTP with deadlines, verified TLS, decoded
+  response-size limits, no automatic redirects, and header validation.
+- Added environment configuration, bounded sleeps, and friendly explicit failures.
+- Added finite float64 vector dot/norm/cosine, stable softmax/top-k, and CPU matrix multiplication.
+- Added Unicode-aware overlapping character chunks, exact cosine retrieval, BM25 lexical
+  retrieval, model-tagged JSON indexes, persistence, and bounded source context.
+- Added `std/ai/http`, `llm`, `rag`, `pipeline`, and `tensor` modules, including chat,
+  indexed/batched embeddings, bounded retries, structured results, and source-bearing answers.
+- Added offline RAG and configured LLM project templates, `doctor --ai`, runnable examples,
+  and native/sanitizer tests against local mock model servers.
+- Added [AI.md](AI.md) documenting contracts, provider protocols, cost/network behavior,
+  retrieval limits, and the distinction between orchestration and GPU model training.
+
 ## 0.2.0
 
 - Added relative `.ad` imports, aliases, shared module loading, bundled-module fallback,

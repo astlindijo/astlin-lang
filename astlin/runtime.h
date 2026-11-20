@@ -27,6 +27,8 @@ typedef struct AstAllocation {
     struct AstAllocation *next;
 } AstAllocation;
 static AstAllocation *ast_allocations = NULL;
+static AstAllocation **ast_allocation_map = NULL;
+static size_t ast_allocation_capacity = 0;
 
 static void ast_cleanup(void) {
     while (ast_allocations) {
@@ -36,7 +38,10 @@ static void ast_cleanup(void) {
         free(item);
     }
     free(ast_roots);
+    free(ast_allocation_map);
     ast_roots = NULL;
+    ast_allocation_map = NULL;
+    ast_allocation_capacity = 0;
     ast_root_count = ast_root_capacity = ast_heap_size = ast_gc_pressure = ast_object_count = 0;
 }
 
@@ -44,6 +49,39 @@ static _Noreturn void ast_fail(int line, const char *message) {
     fflush(stdout);
     fprintf(stderr, "%s:%d: runtime error: %s\n", ast_current_source, line, message);
     exit(1);
+}
+
+static size_t ast_pointer_hash(const void *pointer) {
+    uintptr_t key = (uintptr_t)pointer;
+    key ^= key >> 17;
+    key *= (uintptr_t)UINT64_C(0xed5ad4bb);
+    key ^= key >> 11;
+    return (size_t)key;
+}
+static void ast_map_place(AstAllocation **table, size_t capacity, AstAllocation *item) {
+    size_t slot = ast_pointer_hash(item->data) & (capacity - 1);
+    while (table[slot]) slot = (slot + 1) & (capacity - 1);
+    table[slot] = item;
+}
+static bool ast_map_resize(size_t capacity) {
+    if (capacity > SIZE_MAX / sizeof(AstAllocation *)) return false;
+    AstAllocation **table = calloc(capacity, sizeof(*table));
+    if (!table) return false;
+    for (AstAllocation *item = ast_allocations; item; item = item->next) ast_map_place(table, capacity, item);
+    free(ast_allocation_map);
+    ast_allocation_map = table;
+    ast_allocation_capacity = capacity;
+    return true;
+}
+static void ast_map_add(AstAllocation *item, int line) {
+    if (!ast_allocation_capacity || ast_object_count > ast_allocation_capacity / 2) {
+        size_t capacity = ast_allocation_capacity ? ast_allocation_capacity : 128;
+        while (ast_object_count > capacity / 2) {
+            if (capacity > SIZE_MAX / 2) ast_fail(line, "allocation index is too large");
+            capacity *= 2;
+        }
+        if (!ast_map_resize(capacity)) ast_fail(line, "out of memory indexing allocations");
+    } else ast_map_place(ast_allocation_map, ast_allocation_capacity, item);
 }
 
 /* Collection only runs at compiler-emitted safe points after values are rooted. */
@@ -68,6 +106,7 @@ static void *ast_alloc(size_t size, int line) {
     ast_heap_size += size;
     ast_gc_pressure += charge;
     ++ast_object_count;
+    ast_map_add(item, line);
     return data;
 }
 
@@ -86,15 +125,15 @@ static void ast_root_push(const void *address, AstTrace trace) {
     ast_roots[ast_root_count++] = (AstRoot){address, trace};
 }
 static bool ast_mark(const void *data) {
-    /* Linear lookup keeps literal/external pointers safe without header probing. */
-    for (AstAllocation *item = ast_allocations; item; item = item->next) {
-        if (item->data == data) {
-            if (item->marked) return false;
-            item->marked = true;
-            return true;
-        }
-    }
-    return false;
+    /* Expected O(1) lookup; literal/external pointers are never header-probed. */
+    if (!data || !ast_allocation_capacity) return false;
+    size_t slot = ast_pointer_hash(data) & (ast_allocation_capacity - 1);
+    while (ast_allocation_map[slot] && ast_allocation_map[slot]->data != data)
+        slot = (slot + 1) & (ast_allocation_capacity - 1);
+    AstAllocation *item = ast_allocation_map[slot];
+    if (!item || item->marked) return false;
+    item->marked = true;
+    return true;
 }
 static void ast_trace_str(const void *address) { ast_mark(*(const char *const *)address); }
 static void ast_gc_collect(void) {
@@ -110,6 +149,15 @@ static void ast_gc_collect(void) {
         --ast_object_count;
         free(item->data);
         free(item);
+    }
+    /* Rebuild after sweeping, so the index never retains freed allocation headers. */
+    size_t capacity = 128;
+    while (ast_object_count > capacity / 2) capacity *= 2;
+    bool resized = capacity < ast_allocation_capacity / 4 && ast_map_resize(capacity);
+    if (!resized && ast_allocation_capacity) {
+        memset(ast_allocation_map, 0, ast_allocation_capacity * sizeof(*ast_allocation_map));
+        for (AstAllocation *item = ast_allocations; item; item = item->next)
+            ast_map_place(ast_allocation_map, ast_allocation_capacity, item);
     }
     ast_gc_limit = ast_gc_pressure > SIZE_MAX / 2 ? SIZE_MAX : ast_gc_pressure * 2;
     if (ast_gc_limit < 65536) ast_gc_limit = 65536;

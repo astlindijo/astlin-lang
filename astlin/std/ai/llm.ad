@@ -1,0 +1,155 @@
+import "http.ad" as http
+
+# Store the environment variable NAME, never the secret itself, in printable clients.
+struct Client {
+    base_url: str
+    model: str
+    key_env: str
+    timeout_ms: int
+    attempts: int
+}
+
+struct Completion {
+    ok: bool
+    text: str
+    status: int
+    error: str
+    usage: json
+}
+
+struct Embeddings {
+    ok: bool
+    vectors: json
+    status: int
+    error: str
+}
+
+fn client(base_url: str, model: str, key_env: str) -> Client {
+    var base = base_url
+    while ends_with(base, "/") { base = slice(base, 0, len(base) - 1) }
+    if len(base) == 0 or len(model) == 0 { fail("AI base URL and model must not be empty") }
+    return Client(base, model, key_env, 30000, 3)
+}
+
+fn from_env(model_variable: str) -> Client {
+    var base = env("ASTLIN_AI_BASE_URL")
+    if base == "" { base = "http://localhost:11434/v1" }
+    let model = env(model_variable)
+    if model == "" { fail("Set the model environment variable: " + model_variable) }
+    var key_variable = "ASTLIN_AI_API_KEY"
+    if env(key_variable) == "" { key_variable = "" }
+    return client(base, model, key_variable)
+}
+
+fn request(connection: Client, path: str, body: json) -> http.Response {
+    if connection.attempts < 1 or connection.attempts > 5 { fail("AI attempts must be 1..5") }
+    var headers = json_object()
+    if connection.key_env != "" {
+        let key = env(connection.key_env)
+        if key == "" { return http.Response(0, "", "Missing API key environment variable: " + connection.key_env) }
+        headers = json_set(headers, "Authorization", json_string("Bearer " + key))
+    }
+    var response = http.Response(0, "", "Request was not attempted")
+    for attempt in range(connection.attempts) {
+        response = http.post_json(connection.base_url + path, headers, body, connection.timeout_ms)
+        let retryable = response.error != "" or response.status == 0 or response.status == 429 or response.status >= 500
+        if http.ok(response) or not retryable { return response }
+        if attempt + 1 < connection.attempts { sleep_ms(100 * (attempt + 1)) }
+    }
+    return response
+}
+
+fn message(role: str, content: str) -> json {
+    var value = json_set(json_object(), "role", json_string(role))
+    value = json_set(value, "content", json_string(content))
+    return value
+}
+
+fn chat(connection: Client, messages: json) -> Completion {
+    if json_kind(messages) != "array" { return Completion(false, "", 0, "Messages must be a JSON array", json_null()) }
+    var body = json_set(json_object(), "model", json_string(connection.model))
+    body = json_set(body, "messages", messages)
+    body = json_set(body, "stream", json_bool(false))
+    let response = request(connection, "/chat/completions", body)
+    if not http.ok(response) {
+        var error = "Chat request failed (HTTP " + str(response.status) + ")"
+        if response.error != "" { error = error + ": " + response.error }
+        return Completion(false, "", response.status, error, json_null())
+    }
+    let data = json_try_parse(response.body)
+    if json_kind(data) != "object" { return Completion(false, "", response.status, "Invalid chat response JSON", json_null()) }
+    let choices = data["choices"]
+    if json_kind(choices) != "array" { return Completion(false, "", response.status, "Chat response is missing choices", json_null()) }
+    if json_len(choices) == 0 { return Completion(false, "", response.status, "Chat response has no choices", json_null()) }
+    let first = choices[0]
+    if json_kind(first) != "object" { return Completion(false, "", response.status, "Invalid chat choice", json_null()) }
+    let answer = first["message"]
+    if json_kind(answer) != "object" { return Completion(false, "", response.status, "Chat response is missing message", json_null()) }
+    let content = answer["content"]
+    if json_kind(content) != "string" { return Completion(false, "", response.status, "Chat response has no text content", json_null()) }
+    return Completion(true, json_as_str(content), response.status, "", data["usage"])
+}
+
+fn complete(connection: Client, system: str, prompt: str) -> Completion {
+    var messages = json_push(json_array(), message("system", system))
+    messages = json_push(messages, message("user", prompt))
+    return chat(connection, messages)
+}
+
+fn embed(connection: Client, texts: list[str]) -> Embeddings {
+    if len(texts) == 0 { return Embeddings(true, json_array(), 0, "") }
+    if len(texts) > 64 { return Embeddings(false, json_array(), 0, "Use embed_batches for more than 64 texts") }
+    for text in texts { if len(text) == 0 { return Embeddings(false, json_array(), 0, "Embedding inputs must not be empty") } }
+    var body = json_set(json_object(), "model", json_string(connection.model))
+    body = json_set(body, "input", json_from_strings(texts))
+    let response = request(connection, "/embeddings", body)
+    if not http.ok(response) {
+        var error = "Embedding request failed (HTTP " + str(response.status) + ")"
+        if response.error != "" { error = error + ": " + response.error }
+        return Embeddings(false, json_array(), response.status, error)
+    }
+    let data = json_try_parse(response.body)
+    if json_kind(data) != "object" { return Embeddings(false, json_array(), response.status, "Invalid embedding response JSON") }
+    let rows = data["data"]
+    if json_kind(rows) != "array" { return Embeddings(false, json_array(), response.status, "Embedding response is missing data") }
+    if json_len(rows) != len(texts) { return Embeddings(false, json_array(), response.status, "Embedding response count mismatch") }
+    var vectors = json_array()
+    var dimension = 0
+    for expected in range(len(texts)) {
+        var found = false
+        var selected = json_array()
+        for i in range(json_len(rows)) {
+            let row = rows[i]
+            if json_kind(row) != "object" { return Embeddings(false, json_array(), response.status, "Invalid embedding row") }
+            if not json_is_int(row["index"]) { return Embeddings(false, json_array(), response.status, "Invalid embedding index") }
+            if json_as_int(row["index"]) == expected {
+                if found { return Embeddings(false, json_array(), response.status, "Duplicate embedding index") }
+                selected = row["embedding"]
+                found = true
+            }
+        }
+        if not found or json_kind(selected) != "array" { return Embeddings(false, json_array(), response.status, "Missing embedding vector") }
+        if expected == 0 { dimension = json_len(selected) }
+        if dimension == 0 or json_len(selected) != dimension { return Embeddings(false, json_array(), response.status, "Embedding dimension mismatch") }
+        for i in range(dimension) {
+            if json_kind(selected[i]) != "number" { return Embeddings(false, json_array(), response.status, "Embedding values must be numbers") }
+        }
+        vectors = json_push(vectors, selected)
+    }
+    return Embeddings(true, vectors, response.status, "")
+}
+
+fn embed_batches(connection: Client, texts: list[str], batch_size: int) -> Embeddings {
+    if batch_size < 1 or batch_size > 64 { return Embeddings(false, json_array(), 0, "Batch size must be 1..64") }
+    var batches = json_array()
+    var dimension = 0
+    for start in range(0, len(texts), batch_size) {
+        let result = embed(connection, slice(texts, start, min(start + batch_size, len(texts))))
+        if not result.ok { return result }
+        let batch_dimension = json_len(result.vectors[0])
+        if dimension == 0 { dimension = batch_dimension }
+        if batch_dimension != dimension { return Embeddings(false, json_array(), result.status, "Embedding dimensions changed between batches") }
+        batches = json_push(batches, result.vectors)
+    }
+    return Embeddings(true, json_flatten(batches), 200, "")
+}

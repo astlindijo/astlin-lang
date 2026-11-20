@@ -1,4 +1,6 @@
-# Astlin 0.2 language reference
+# Astlin 0.3 language reference
+
+The [AI guide](AI.md) documents JSON, HTTP, chat/embeddings, RAG, and numeric APIs.
 
 ## Source and entry point
 
@@ -21,6 +23,7 @@ and digits and cannot begin with a digit. Names are case-sensitive.
 | `str` | Immutable, NUL-free UTF-8 string |
 | `list[T]` | Immutable homogeneous list; `T` is `int`, `float`, `bool`, or `str` |
 | Named struct | Immutable value with declared fields |
+| `json` | Immutable null/bool/number/string/array/object value with checked dynamic access |
 | `void` | No function return value; not a parameter, local, or field type |
 
 ```text
@@ -63,7 +66,7 @@ fn main() {
 Constructor arguments are positional, in field declaration order, and must match
 their declared types. Fields are read-only, including when the containing binding
 uses `var`. To change a value, construct another struct and reassign the binding.
-Structs can contain scalars, scalar lists, and other structs. Recursive struct
+Structs can contain scalars, scalar lists, JSON values, and other structs. Recursive struct
 definitions, struct lists, methods, inheritance, and record equality are not supported.
 Empty structs are allowed. Types have nominal identity: types declared in different
 modules remain distinct even when their fields match.
@@ -133,6 +136,10 @@ arithmetic follows the target and may produce infinity or NaN. `%` is integer-on
 
 Strings compare by content; ordering compares UTF-8 bytes without locale collation
 or normalization. Lists and structs cannot be compared.
+
+JSON values also cannot be compared with equality operators. `value["key"]` checks
+object access; missing keys yield JSON null. `value[index]` checks array access and
+bounds. JSON null is distinct from a native nullable pointer; use `json_kind` to inspect it.
 
 ## Functions and control flow
 
@@ -259,10 +266,13 @@ run after rooting managed values and at statement/iteration safe points when all
 exceeds a threshold. The threshold includes block metadata and a minimum payload
 charge, so zero-length lists also trigger collection. It is at least 64 KiB and is
 updated relative to live allocation cost after collection.
-`gc_collect()` forces collection. Other remaining allocations are freed at process exit.
+`gc_collect()` forces collection. JSON trees, container storage, and string/number
+payloads are traced as well. Other remaining allocations are freed at process exit.
 
-Allocation lookup during tracing is linear, so collection pauses can grow with heap
-size. Root tables, allocation metadata, C stack space, and temporary I/O buffers are
+Allocation lookup during tracing uses an open-addressed hash index with expected
+constant-time lookup. Sweeps rebuild it and can shrink it after a large transient heap.
+Collection still pauses execution and grows with live data and allocation count.
+Root tables, allocation/hash metadata, C stack space, and temporary I/O buffers are
 excluded from `heap_bytes()`. There is no hard allocation budget, stack-overflow
 interception, thread support, or real-time pause guarantee.
 

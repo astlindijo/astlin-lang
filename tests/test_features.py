@@ -318,12 +318,20 @@ class FeaturePrograms(unittest.TestCase):
                                             cwd=root, capture_output=True, text=True, timeout=30)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     program = root / 'main.ad'
-                    program.write_text('import "std/math.ad" as math\nfn main() { print(math.square(12)) }')
+                    program.write_text('import "std/math.ad" as math\nimport "std/ai/rag.ad" as rag\nfn main() { print(math.square(12)); print(rag.lexical(["doc"], ["Astlin uses ad files"], ["guide.md"], "Astlin", 1)[0]["id"]) }')
                     env = dict(os.environ, PYTHONPATH=str(installed))
                     result = subprocess.run([sys.executable, str(installed / 'bin/astlin'), 'run', str(program)],
                                             cwd=root, env=env, capture_output=True, text=True, timeout=20)
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertEqual(result.stdout, '144\n')
+                    self.assertEqual(result.stdout, '144\n"doc"\n')
+                    project = root / f'rag-project-{i}'
+                    result = subprocess.run([sys.executable, str(installed / 'bin/astlin'), 'init', str(project), '--template', 'rag'],
+                                            cwd=root, env=env, capture_output=True, text=True, timeout=20)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    result = subprocess.run([sys.executable, str(installed / 'bin/astlin'), 'run'],
+                                            cwd=project, env=env, capture_output=True, text=True, timeout=20)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn('Top source: language', result.stdout)
 
 
 if __name__ == '__main__':

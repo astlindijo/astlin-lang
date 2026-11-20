@@ -1,0 +1,23 @@
+struct Response {
+    status: int
+    body: str
+    error: str
+}
+
+fn send(method: str, url: str, headers: json, body: str, timeout_ms: int) -> Response {
+    let response = http_request(method, url, headers, body, timeout_ms)
+    return Response(json_as_int(response["status"]), json_as_str(response["body"]), json_as_str(response["error"]))
+}
+
+fn ok(response: Response) -> bool {
+    return response.error == "" and response.status >= 200 and response.status < 300
+}
+
+fn get(url: str, timeout_ms: int) -> Response {
+    return send("GET", url, json_object(), "", timeout_ms)
+}
+
+fn post_json(url: str, headers: json, body: json, timeout_ms: int) -> Response {
+    let typed_headers = json_set(headers, "Content-Type", json_string("application/json"))
+    return send("POST", url, typed_headers, json_dump(body), timeout_ms)
+}

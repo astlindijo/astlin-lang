@@ -1,0 +1,9 @@
+import "std/ai/rag.ad" as rag
+
+fn main() {
+    let texts = ["Astlin programs use the .ad extension.", "RAG retrieves relevant documents before generation.", "Vector similarity ranks embeddings."]
+    # Real lexical BM25 retrieval runs offline without an embedding model.
+    let hits = rag.lexical(["language", "retrieval", "vectors"], texts, ["guide.ad", "rag.md", "vectors.md"], "Which extension does Astlin use?", 2)
+    print("Top source:", json_as_str(hits[0]["id"]))
+    print(rag.prompt("Which extension does Astlin use?", rag.context_hits(hits, 4000)))
+}

@@ -21,13 +21,13 @@ INFO = DIST + '.dist-info'
 
 def package_files():
     return sorted(p for p in (ROOT / 'astlin').rglob('*')
-                  if p.is_file() and p.suffix in {'.py', '.h', '.ad'})
+                  if p.is_file() and p.suffix in {'.py', '.h', '.ad', '.txt', '.md'})
 
 
 def metadata_files():
     metadata = ('Metadata-Version: 2.4\nName: astlin-lang\n'
                 f'Version: {VERSION}\n'
-                'Summary: Astlin .ad language compiler\nRequires-Python: >=3.10\n'
+                'Summary: Astlin .ad language with native JSON, LLM clients, and RAG\nRequires-Python: >=3.10\n'
                 'Author: Astlin Dijo\nLicense-Expression: MIT\nLicense-File: LICENSE\n'
                 'Project-URL: Source, https://github.com/astlindijo/astlin-lang\n'
                 'Project-URL: Issues, https://github.com/astlindijo/astlin-lang/issues\n'
@@ -92,7 +92,7 @@ def build_sdist(sdist_directory, config_settings=None):
         files.extend(p for p in (ROOT / folder).rglob('*')
                      if p.is_file() and p.suffix in source_suffixes and '__pycache__' not in p.parts)
     files.extend(ROOT / name for name in ('astlin.py', 'pyproject.toml', 'README.md', 'LANGUAGE.md',
-                                          'CHANGELOG.md', 'RELEASING.md', 'LICENSE', 'Makefile', 'astlin.json', '.gitignore')
+                                          'CHANGELOG.md', 'RELEASING.md', 'AI.md', 'LICENSE', 'Makefile', 'astlin.json', '.gitignore')
                  if (ROOT / name).is_file())
     with tarfile.open(directory / filename, 'w:gz') as archive:
         for path in sorted(set(files)):

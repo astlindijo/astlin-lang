@@ -1,7 +1,7 @@
 # Functions may call functions defined later in the file.
 fn main() {
     let name = "Astlin"
-    let version: float = 0.2
+    let version: float = 0.3
     print(name, version)
 
     let scores = [12, 18, 24, 30]
