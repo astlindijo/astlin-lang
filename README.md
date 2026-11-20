@@ -2,6 +2,10 @@
 
 **Astlin is a statically typed programming language with `.ad` source files and native executables.**
 
+[Source](https://github.com/astlindijo/astlin-lang) ·
+[Releases](https://github.com/astlindijo/astlin-lang/releases) ·
+[Issues](https://github.com/astlindijo/astlin-lang/issues) · [MIT license](LICENSE)
+
 Version **0.2.0** includes a working compiler, tracing garbage collector, multi-file
 imports, immutable structs, a small standard library, project tools, tests, offline
 installation, and VS Code syntax support. The compiler uses Python's standard library;
@@ -45,6 +49,10 @@ environment, including offline:
 python3 -m pip install --no-index .
 astlin --version
 ```
+
+For a release installation, download its `.whl` file from
+[GitHub Releases](https://github.com/astlindijo/astlin-lang/releases) and run
+`python3 -m pip install ./astlin_lang-0.2.0-py3-none-any.whl`.
 
 The build backend needs no third-party build packages. A C compiler is needed only
 to build or run Astlin programs, not to install the compiler or check source types.

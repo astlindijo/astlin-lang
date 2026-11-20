@@ -17,6 +17,8 @@ def prepare(output):
     notes = ROOT / 'releases' / f'v{version}.md'
     if not notes.is_file():
         raise ValueError(f'missing release notes: {notes}')
+    if not (ROOT / 'LICENSE').is_file():
+        raise ValueError('a selected LICENSE is required before preparing a public release')
     output.mkdir(parents=True, exist_ok=True)
     wheel = output / build_backend.build_wheel(output)
     source = output / build_backend.build_sdist(output)
@@ -24,17 +26,19 @@ def prepare(output):
                 'astlin/runtime.h', 'astlin/std/math.ad', 'astlin/std/text.ad'}
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
-        if not required <= names:
+        if not (required | {f'{build_backend.INFO}/licenses/LICENSE'}) <= names:
             raise ValueError('wheel is missing compiler/runtime/library files')
         metadata = BytesParser().parsebytes(archive.read(f'{build_backend.INFO}/METADATA'))
         if metadata['Name'] != 'astlin-lang' or metadata['Version'] != version:
             raise ValueError('wheel metadata version/name does not match the compiler')
+        if metadata['License-Expression'] != 'MIT':
+            raise ValueError('wheel metadata does not declare the selected MIT license')
     with tarfile.open(source, 'r:gz') as archive:
         names = set(archive.getnames())
         if any('.DS_Store' in Path(name).parts or '__pycache__' in Path(name).parts for name in names):
             raise ValueError('source archive contains local metadata or caches')
         expected = required | {'pyproject.toml', 'tools/build_backend.py', 'tools/prepare_release.py',
-                               'README.md', 'LANGUAGE.md', 'RELEASING.md', f'releases/v{version}.md'}
+                               'README.md', 'LANGUAGE.md', 'RELEASING.md', 'LICENSE', f'releases/v{version}.md'}
         if not {f'{build_backend.DIST}/{name}' for name in expected} <= names:
             raise ValueError('source archive is missing release or build files')
         member = archive.extractfile(f'{build_backend.DIST}/PKG-INFO')

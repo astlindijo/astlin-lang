@@ -10,6 +10,15 @@ description = "Astlin .ad language: static types, garbage collection, native exe
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Astlin Dijo" }]
+
+[project.urls]
+Source = "https://github.com/astlindijo/astlin-lang"
+Issues = "https://github.com/astlindijo/astlin-lang/issues"
+Releases = "https://github.com/astlindijo/astlin-lang/releases"
+Documentation = "https://github.com/astlindijo/astlin-lang/blob/main/LANGUAGE.md"
 
 [project.scripts]
 astlin = "astlin.compiler:main"

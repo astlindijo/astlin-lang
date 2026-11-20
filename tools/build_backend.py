@@ -25,9 +25,13 @@ def package_files():
 
 
 def metadata_files():
-    metadata = ('Metadata-Version: 2.1\nName: astlin-lang\n'
+    metadata = ('Metadata-Version: 2.4\nName: astlin-lang\n'
                 f'Version: {VERSION}\n'
                 'Summary: Astlin .ad language compiler\nRequires-Python: >=3.10\n'
+                'Author: Astlin Dijo\nLicense-Expression: MIT\nLicense-File: LICENSE\n'
+                'Project-URL: Source, https://github.com/astlindijo/astlin-lang\n'
+                'Project-URL: Issues, https://github.com/astlindijo/astlin-lang/issues\n'
+                'Project-URL: Releases, https://github.com/astlindijo/astlin-lang/releases\n'
                 'Description-Content-Type: text/markdown\n\n' + (ROOT / 'README.md').read_text(encoding='utf-8'))
     files = {
         'METADATA': metadata.encode('utf-8'),
