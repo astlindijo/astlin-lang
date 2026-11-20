@@ -1,0 +1,16 @@
+fn lines(text: str) -> list[str] {
+    return split(text, "\n")
+}
+
+fn is_blank(text: str) -> bool {
+    return len(trim(text)) == 0
+}
+
+fn repeat(text: str, count: int) -> str {
+    assert(count >= 0)
+    var result = ""
+    for i in range(count) {
+        result = result + text
+    }
+    return result
+}

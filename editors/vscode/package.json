@@ -1,0 +1,17 @@
+{
+  "name": "astlin-language",
+  "displayName": "Astlin",
+  "description": "Syntax highlighting and bracket support for Astlin .ad files",
+  "version": "0.2.0",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [{
+      "id": "astlin",
+      "aliases": ["Astlin", "astlin"],
+      "extensions": [".ad"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{ "language": "astlin", "scopeName": "source.astlin", "path": "./syntaxes/astlin.tmLanguage.json" }]
+  }
+}

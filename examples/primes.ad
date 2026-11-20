@@ -1,0 +1,26 @@
+fn is_prime(n: int) -> bool {
+    if n < 2 {
+        return false
+    }
+    var divisor = 2
+    # n / divisor avoids overflowing divisor * divisor.
+    while divisor <= n / divisor {
+        if n % divisor == 0 {
+            return false
+        }
+        divisor = divisor + 1
+    }
+    return true
+}
+
+fn main() {
+    var count = 0
+    for n in range(2, 101) {
+        if is_prime(n) {
+            print(n)
+            count = count + 1
+        }
+    }
+    assert(count == 25)
+    print("Primes below 101:", count)
+}

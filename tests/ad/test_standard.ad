@@ -1,0 +1,13 @@
+import "std/math.ad" as math
+import "std/text.ad" as text
+
+fn main() {
+    assert(math.square(12) == 144)
+    assert(math.factorial(10) == 3628800)
+    assert(math.clamp(99, 0, 10) == 10)
+    assert(text.is_blank(" \t\n"))
+    assert(text.repeat("ab", 3) == "ababab")
+    assert(join(split("a::b::", "::"), "-") == "a-b-")
+    assert("🌍"[0] == "🌍")
+    assert(slice("café🌍", 3, 5) == "é🌍")
+}

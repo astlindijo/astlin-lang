@@ -1,0 +1,15 @@
+[build-system]
+requires = []
+build-backend = "tools.build_backend"
+backend-path = ["."]
+
+[project]
+name = "astlin-lang"
+dynamic = ["version"]
+description = "Astlin .ad language: static types, garbage collection, native executables"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+astlin = "astlin.compiler:main"

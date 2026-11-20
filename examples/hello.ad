@@ -1,0 +1,5 @@
+fn main() {
+    let language = "Astlin"
+    print("Hello from " + language + "!")
+    print("Native code. Static types. Checked arithmetic.")
+}

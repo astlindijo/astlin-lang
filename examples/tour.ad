@@ -1,0 +1,47 @@
+# Functions may call functions defined later in the file.
+fn main() {
+    let name = "Astlin"
+    let version: float = 0.2
+    print(name, version)
+
+    let scores = [12, 18, 24, 30]
+    print("scores:", scores, "count:", len(scores))
+    print("sum:", sum(scores))
+    print("first:", scores[0])
+
+    # let is immutable; var explicitly allows reassignment.
+    var total = 0
+    for n in range(1, 11) {
+        total = total + n
+    }
+    assert(total == 55)
+    print("sum of 1..10:", total)
+
+    if total > 50 and len(name) == 6 {
+        print("checks passed")
+    } else {
+        print("unexpected result")
+    }
+
+    print("factorial(10):", factorial(10))
+    print("Unicode code points:", len("Hello 🌍"))
+    print("explicit conversion:", float(7) / 2.0)
+    let empty: list[str] = []
+    print("empty list:", empty)
+}
+
+fn sum(values: list[int]) -> int {
+    var result = 0
+    for value in values {
+        result = result + value
+    }
+    return result
+}
+
+fn factorial(n: int) -> int {
+    if n <= 1 {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}

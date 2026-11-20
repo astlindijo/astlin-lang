@@ -1,0 +1,6 @@
+fn main() {
+    let name = input("What is your name? ")
+    print("Hello, " + name + "!")
+    let age = int(input("How old are you? "))
+    print("Next year you will be", age + 1)
+}

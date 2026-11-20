@@ -1,0 +1,16 @@
+# Usage: astlin run examples/file_tool.ad -- path/to/file.txt
+fn main() {
+    let arguments = args()
+    if len(arguments) != 1 {
+        print("Usage: file_tool <UTF-8 text file>")
+        return
+    }
+    let path = arguments[0]
+    if not file_exists(path) {
+        print("File does not exist:", path)
+        return
+    }
+    let contents = read_file(path)
+    print("Unicode characters:", len(contents))
+    print("Newline-separated parts:", len(split(contents, "\n")))
+}

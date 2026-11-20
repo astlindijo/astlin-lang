@@ -1,0 +1,22 @@
+struct Message {
+    title: str
+    parts: list[str]
+}
+
+fn make(n: int) -> Message {
+    return Message("message " + str(n), [str(n), str(n + 1)])
+}
+
+fn main() {
+    let kept = make(41)
+    for i in range(20000) {
+        let message = make(i)
+        if i % 3 == 0 { continue }
+        assert(len(message.parts) == 2)
+        assert(true and len(trim(str(i))) > 0)
+    }
+    gc_collect()
+    assert(kept.title == "message 41")
+    assert(join(kept.parts, ",") == "41,42")
+    assert(heap_bytes() < 10000)
+}
