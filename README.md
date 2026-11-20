@@ -6,6 +6,8 @@
 [Releases](https://github.com/astlindijo/astlin-lang/releases) ·
 [Issues](https://github.com/astlindijo/astlin-lang/issues) · [MIT license](LICENSE)
 
+[![Astlin CI](https://github.com/astlindijo/astlin-lang/actions/workflows/ci.yml/badge.svg)](https://github.com/astlindijo/astlin-lang/actions/workflows/ci.yml)
+
 Version **0.2.0** includes a working compiler, tracing garbage collector, multi-file
 imports, immutable structs, a small standard library, project tools, tests, offline
 installation, and VS Code syntax support. The compiler uses Python's standard library;
@@ -30,7 +32,8 @@ fn main() {
 ## Get started
 
 Requirements: **Python 3.10+** and **Clang or GCC** available as `cc`.
-The validated platform is macOS ARM64. Other targets have not yet been validated.
+CI validation passes on Ubuntu and macOS with Python 3.10 and 3.14. Local development
+also validates macOS ARM64. Windows has not yet been validated.
 
 From this checkout, no installation is needed:
 
